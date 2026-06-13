@@ -1,0 +1,149 @@
+{% extends "layout.html" %}
+
+{% block title %}Report Card - {{ student.name }} | Aura Portal{% endblock %}
+
+{% block content %}
+<div class="section-header no-print" style="margin-bottom: 2rem;">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm" id="btn-back-dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
+            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+        </svg>
+        Back to Dashboard
+    </a>
+    
+    <button onclick="window.print();" class="btn btn-outline-cyan btn-sm" id="btn-print-report">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
+            <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+        </svg>
+        Print Report Card
+    </button>
+</div>
+
+<div class="glass-panel report-card-container" id="report-card-panel">
+    <!-- Printable Brand Banner -->
+    <div class="print-only" style="text-align: center; margin-bottom: 2rem; display: none;">
+        <h1 style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; color: #111; letter-spacing: -0.02em;">AURA ACADEMIC PORTAL</h1>
+        <p style="color: #666; font-size: 0.9rem;">Official Dynamic Performance Report</p>
+        <hr style="border: none; border-bottom: 2px solid #333; margin-top: 1rem;">
+    </div>
+
+    <!-- Report Header -->
+    <div class="report-header">
+        <div class="student-meta">
+            <h2>{{ student.name }}</h2>
+            <p>Student Identifier: <strong>#{{ student.student_id }}</strong></p>
+            <p>Department: <strong>{{ student.department }}</strong></p>
+            <p>Graded Count: <strong>{{ student.graded_count }} / {{ student.subject_count }} Subjects</strong></p>
+        </div>
+        
+        <div class="report-badge-container">
+            <div class="report-badge-title">Overall Grade</div>
+            <div class="report-badge-value">
+                <span class="grade-pill grade-{{ student.grade }}" style="font-size: 1.8rem; padding: 0.5rem 1.25rem;">{{ student.grade }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject Wise Scores -->
+    <div class="report-subjects">
+        {% for sub, score in student.marks.items() %}
+        <div class="subject-score-row">
+            <div class="subject-score-header">
+                <span class="subject-score-label" title="{{ sub }}">{{ sub }}</span>
+                <span class="subject-score-value">{{ score }} / 100</span>
+            </div>
+            <div class="score-bar-bg">
+                <div class="score-bar-fill" style="width: {{ score }}%;"></div>
+            </div>
+        </div>
+        {% else %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--text-muted); font-style: italic;">
+            No scores have been submitted for this student record.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Performance Summary Details -->
+    <div class="report-summary-grid">
+        <div class="summary-item" id="summary-total-score">
+            <div class="summary-label">Total Marks</div>
+            <div class="summary-value" style="color: #fff;">{{ student.total }} <span style="font-size: 0.75rem; color: var(--text-muted);">/ {{ student.graded_count * 100 }}</span></div>
+        </div>
+        <div class="summary-item" id="summary-average">
+            <div class="summary-label">Average %</div>
+            <div class="summary-value" style="color: var(--theme-accent-primary);">{{ student.average }}%</div>
+        </div>
+        <div class="summary-item" id="summary-dept-rank">
+            <div class="summary-label">Dept Rank</div>
+            <div class="summary-value" style="color: var(--theme-accent-primary);">#{{ dept_rank }}</div>
+        </div>
+        <div class="summary-item" id="summary-overall-rank">
+            <div class="summary-label">Overall Rank</div>
+            <div class="summary-value" style="color: var(--theme-accent-secondary);">#{{ overall_rank }}</div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS Print Rules */
+    @media print {
+        body {
+            background: #fff !important;
+            color: #000 !important;
+        }
+        header, footer, .no-print {
+            display: none !important;
+        }
+        .container {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .glass-panel {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: #000 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        .report-card-container {
+            border: 2px solid #000 !important;
+            border-radius: 0 !important;
+            padding: 2.5rem !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+        .student-meta h2 {
+            color: #000 !important;
+        }
+        .student-meta p {
+            color: #333 !important;
+        }
+        .score-bar-bg {
+            background: #ddd !important;
+            border: 1px solid #999 !important;
+        }
+        .score-bar-fill {
+            background: #444 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .summary-value {
+            color: #000 !important;
+        }
+        .summary-label {
+            color: #444 !important;
+        }
+        .report-summary-grid {
+            border-top: 1px solid #333 !important;
+        }
+        .report-header {
+            border-bottom: 1px solid #333 !important;
+        }
+    }
+</style>
+{% endblock %}

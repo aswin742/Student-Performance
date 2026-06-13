@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ stats.code }} Dashboard | Aura Portal{% endblock %}
+
+{% block content %}
+<div class="section-header no-print">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm" id="btn-back-dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
+            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+        </svg>
+        Back to Directory
+    </a>
+</div>
+
+<div class="section-header" style="margin-top: 1rem;">
+    <div>
+        <h1 class="section-title" style="font-size: 2rem;">{{ stats.code }} Department</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.25rem;">{{ stats.name }}</p>
+    </div>
+    
+    <a href="{{ url_for('leaderboard', department=stats.code) }}" class="btn btn-outline-cyan btn-sm" id="btn-dept-leaderboard">
+        View {{ stats.code }} Leaderboard
+    </a>
+</div>
+
+<!-- Department Stats Grid -->
+<div class="metrics-grid">
+    <div class="glass-panel metric-card" id="metric-dept-students">
+        <div class="metric-label">Enrolled Students</div>
+        <div class="metric-value">{{ stats.total_students }}</div>
+        <div class="metric-sub">Registered in {{ stats.code }}</div>
+    </div>
+    
+    <div class="glass-panel metric-card" id="metric-dept-avg">
+        <div class="metric-label">Department Average</div>
+        <div class="metric-value">{{ stats.average_performance }}%</div>
+        <div class="metric-sub">Mean department grade</div>
+    </div>
+    
+    <div class="glass-panel metric-card" id="metric-dept-top">
+        <div class="metric-label">Department Topper</div>
+        <div class="metric-value" style="font-size: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ stats.top_scorer }}">{{ stats.top_scorer }}</div>
+        <div class="metric-sub">Top Avg Score: {{ stats.top_score }}%</div>
+    </div>
+</div>
+
+<!-- Department Students Registry -->
+<div class="glass-panel">
+    <div class="section-header" style="margin-bottom: 1.5rem;">
+        <h2 class="section-title" style="font-size: 1.25rem;">{{ stats.code }} Student Registry</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="dept-students-table">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Graded Subjects</th>
+                    <th>Average Score</th>
+                    <th>Performance Grade</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr id="student-row-{{ student.student_id }}">
+                    <td><strong>#{{ student.student_id }}</strong></td>
+                    <td>{{ student.name }}</td>
+                    <td>
+                        <span style="font-size: 0.9rem; font-weight: 500;">{{ student.graded_count }} / {{ student.subject_count }}</span>
+                    </td>
+                    {% if student.graded_count > 0 %}
+                        <td><strong>{{ student.average }}%</strong></td>
+                        <td><span class="grade-pill grade-{{ student.grade }}">{{ student.grade }}</span></td>
+                    {% else %}
+                        <td colspan="2" style="text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.85rem;">No marks entered</td>
+                    {% endif %}
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
+                            <a href="{{ url_for('enter_marks', student_id=student.student_id) }}" class="btn btn-secondary btn-sm" id="btn-enter-{{ student.student_id }}">
+                                {% if student.graded_count > 0 %}Edit Marks{% else %}Enter Marks{% endif %}
+                            </a>
+                            {% if student.graded_count > 0 %}
+                                <a href="{{ url_for('report', student_id=student.student_id) }}" class="btn btn-outline-cyan btn-sm" id="btn-report-{{ student.student_id }}">Report</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
+                        No students enrolled in this department.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

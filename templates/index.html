@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+
+{% block title %}Academic Dashboard | Aura Portal{% endblock %}
+
+{% block content %}
+<div class="section-header">
+    <h1 class="section-title">Institutional Overview</h1>
+    <a href="{{ url_for('add_student') }}" class="btn btn-primary" id="btn-add-student-dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        Register Student
+    </a>
+</div>
+
+<!-- Overall Metric Cards -->
+<div class="metrics-grid">
+    <div class="glass-panel metric-card" id="metric-total-students" style="--theme-accent-primary: #a855f7;">
+        <div class="metric-label">Total Enrollment</div>
+        <div class="metric-value">{{ summary.total_students }}</div>
+        <div class="metric-sub">Across all departments</div>
+    </div>
+    
+    <div class="glass-panel metric-card" id="metric-class-avg" style="--theme-accent-primary: #06b6d4;">
+        <div class="metric-label">Overall Average</div>
+        <div class="metric-value">{{ summary.class_average }}%</div>
+        <div class="metric-sub">Average grade percentage</div>
+    </div>
+    
+    <div class="glass-panel metric-card" id="metric-top-performer" style="--theme-accent-primary: #eab308;">
+        <div class="metric-label">Top Performer</div>
+        <div class="metric-value" style="font-size: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ summary.top_scorer }}">{{ summary.top_scorer }}</div>
+        <div class="metric-sub">Highest Avg Score: {{ summary.top_score }}%</div>
+    </div>
+</div>
+
+<!-- Department Overview Grid -->
+<div class="section-header">
+    <h2 class="section-title">Academic Departments</h2>
+</div>
+<div class="depts-grid">
+    {% for code, info in summary.departments.items() %}
+    <a href="{{ url_for('department_view', dept=code) }}" class="glass-panel dept-card dept-card-{{ code|lower }}" id="dept-card-{{ code|lower }}">
+        <div class="dept-card-title">
+            <span>{{ code }}</span>
+            <span style="font-size: 0.8rem; opacity: 0.6; font-weight: normal;">View &rarr;</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.2; height: 2.4em; overflow: hidden; text-overflow: ellipsis;">
+            {{ info.name }}
+        </div>
+        
+        <div class="dept-stat-row">
+            <span class="dept-stat-label">Students</span>
+            <span class="dept-stat-val">{{ info.total_students }}</span>
+        </div>
+        
+        <div class="dept-stat-row">
+            <span class="dept-stat-label">Average</span>
+            <span class="dept-stat-val">{{ info.average_performance }}%</span>
+        </div>
+        
+        <div class="dept-stat-row">
+            <span class="dept-stat-label">Top Student</span>
+            <span class="dept-stat-val" style="max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ info.top_scorer }}">{{ info.top_scorer }}</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Overall Student Registry List -->
+<div class="glass-panel">
+    <div class="section-header" style="margin-bottom: 1rem;">
+        <h2 class="section-title" style="font-size: 1.25rem;">Overall Student Directory</h2>
+        <div class="search-container" style="margin-bottom: 0;">
+            <input type="text" id="directory-search" class="form-control search-input" placeholder="Search students or departments...">
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="custom-table" id="directory-table">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Graded Subjects</th>
+                    <th>Average Score</th>
+                    <th>Performance Grade</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr class="directory-row" data-name="{{ student.name|lower }}" data-dept="{{ student.department|lower }}" id="student-row-{{ student.student_id }}">
+                    <td><strong>#{{ student.student_id }}</strong></td>
+                    <td>{{ student.name }}</td>
+                    <td>
+                        <span class="badge badge-{{ student.department|lower }}">{{ student.department }}</span>
+                    </td>
+                    <td>
+                        <span style="font-size: 0.9rem; font-weight: 500;">{{ student.graded_count }} / {{ student.subject_count }}</span>
+                    </td>
+                    {% if student.graded_count > 0 %}
+                        <td><strong>{{ student.average }}%</strong></td>
+                        <td><span class="grade-pill grade-{{ student.grade }}">{{ student.grade }}</span></td>
+                    {% else %}
+                        <td colspan="2" style="text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.85rem;">No marks entered</td>
+                    {% endif %}
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
+                            <a href="{{ url_for('enter_marks', student_id=student.student_id) }}" class="btn btn-secondary btn-sm" id="btn-enter-{{ student.student_id }}">
+                                {% if student.graded_count > 0 %}Edit Marks{% else %}Enter Marks{% endif %}
+                            </a>
+                            {% if student.graded_count > 0 %}
+                                <a href="{{ url_for('report', student_id=student.student_id) }}" class="btn btn-outline-cyan btn-sm" id="btn-report-{{ student.student_id }}">Report</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
+                        <div style="font-size: 1.1rem; margin-bottom: 0.75rem;">No students registered yet.</div>
+                        <a href="{{ url_for('add_student') }}" class="btn btn-primary btn-sm">Register First Student</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('directory-search');
+        const rows = document.querySelectorAll('.directory-row');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase().trim();
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name');
+                    const dept = row.getAttribute('data-dept');
+                    if (name.includes(query) || dept.includes(query)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

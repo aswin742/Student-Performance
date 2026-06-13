@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block title %}Register Student | Aura Portal{% endblock %}
+
+{% block content %}
+<div class="glass-panel form-panel" id="register-student-panel">
+    <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem; text-align: center;">Register Student Record</h1>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center; margin-bottom: 2rem;">
+        Enter the student's name and assign them to an engineering department.
+    </p>
+
+    <form action="{{ url_for('add_student') }}" method="POST" id="register-student-form">
+        <!-- Full Name -->
+        <div class="form-group">
+            <label for="name" class="form-label">Full Name</label>
+            <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Eleanor Vance" required autocomplete="off">
+        </div>
+
+        <!-- Department Selection -->
+        <div class="form-group">
+            <label for="department" class="form-label">Academic Department</label>
+            <select id="department" name="department" class="form-control" required>
+                <option value="" disabled selected>Select Department</option>
+                {% for code, details in departments.items() %}
+                <option value="{{ code }}">{{ code }} - {{ details.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary" id="btn-cancel-register">Cancel</a>
+            <button type="submit" class="btn btn-primary" id="btn-submit-register">Register Student</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

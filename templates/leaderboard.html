@@ -1,0 +1,178 @@
+{% extends "layout.html" %}
+
+{% block title %}Standings Leaderboard | Aura Portal{% endblock %}
+
+{% block content %}
+<div class="section-header" style="flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+        <h1 class="section-title">
+            {% if selected_dept == 'ALL' %}
+                Overall Standings Leaderboard
+            {% else %}
+                {{ selected_dept }} Standings Leaderboard
+            {% endif %}
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.25rem;">
+            Ranked by average performance score.
+        </p>
+    </div>
+    
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="{{ url_for('export_csv', department=selected_dept if selected_dept != 'ALL' else '') }}" class="btn btn-outline-cyan btn-sm" id="btn-export-csv">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            Export Standings
+        </a>
+    </div>
+</div>
+
+<!-- Department Filters Navbar -->
+<div class="glass-panel" style="padding: 1rem; margin-bottom: 2.5rem; border-radius: 12px;">
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; align-items: center;">
+        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-right: 0.5rem;">Filter Standings:</span>
+        
+        <a href="{{ url_for('leaderboard') }}" 
+           class="btn btn-sm {% if selected_dept == 'ALL' %}btn-primary{% else %}btn-secondary{% endif %}" 
+           style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+           Overall College
+        </a>
+        
+        {% for code in departments.keys() %}
+        <a href="{{ url_for('leaderboard', department=code) }}" 
+           class="btn btn-sm {% if selected_dept == code %}btn-primary{% else %}btn-secondary{% endif %}" 
+           style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+           {{ code }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Podium Display for Top 3 Scored Students -->
+{% if leaderboard|length > 0 %}
+<div class="podium-container" id="podium-section">
+    <!-- Rank 2 (Silver) -->
+    {% if leaderboard|length > 1 %}
+    <div class="podium-card rank-2" id="podium-silver">
+        <div class="podium-rank">2</div>
+        <div class="podium-name" title="{{ leaderboard[1].name }}">{{ leaderboard[1].name }}</div>
+        <div class="podium-dept">
+            <span class="badge badge-{{ leaderboard[1].department|lower }}">{{ leaderboard[1].department }}</span>
+        </div>
+        <div class="podium-score" style="margin-top: 0.5rem;">{{ leaderboard[1].average }}%</div>
+        <div class="podium-avg">Total: {{ leaderboard[1].total }} pts</div>
+    </div>
+    {% endif %}
+
+    <!-- Rank 1 (Gold) -->
+    <div class="podium-card rank-1" id="podium-gold">
+        <div class="podium-rank">1</div>
+        <div class="podium-name" title="{{ leaderboard[0].name }}">{{ leaderboard[0].name }}</div>
+        <div class="podium-dept">
+            <span class="badge badge-{{ leaderboard[0].department|lower }}">{{ leaderboard[0].department }}</span>
+        </div>
+        <div class="podium-score" style="margin-top: 0.5rem;">{{ leaderboard[0].average }}%</div>
+        <div class="podium-avg">Total: {{ leaderboard[0].total }} pts</div>
+    </div>
+
+    <!-- Rank 3 (Bronze) -->
+    {% if leaderboard|length > 2 %}
+    <div class="podium-card rank-3" id="podium-bronze">
+        <div class="podium-rank">3</div>
+        <div class="podium-name" title="{{ leaderboard[2].name }}">{{ leaderboard[2].name }}</div>
+        <div class="podium-dept">
+            <span class="badge badge-{{ leaderboard[2].department|lower }}">{{ leaderboard[2].department }}</span>
+        </div>
+        <div class="podium-score" style="margin-top: 0.5rem;">{{ leaderboard[2].average }}%</div>
+        <div class="podium-avg">Total: {{ leaderboard[2].total }} pts</div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Full Standings Table -->
+<div class="glass-panel">
+    <div class="section-header" style="flex-wrap: wrap; gap: 1rem;">
+        <h2 class="section-title" style="font-size: 1.25rem;">Student Leaderboard</h2>
+        <div class="search-container" style="margin-bottom: 0;">
+            <input type="text" id="leaderboard-search" class="form-control search-input" placeholder="Search by name or department...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="custom-table" id="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Graded Subjects</th>
+                    <th>Total Score</th>
+                    <th>Average Score</th>
+                    <th>Grade</th>
+                    <th style="text-align: right;">View</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in leaderboard %}
+                <tr class="leaderboard-row" data-name="{{ row.name|lower }}" data-dept="{{ row.department|lower }}">
+                    <td>
+                        {% if row.rank == 1 %}
+                            <span class="rank-medal" title="Gold Medal">🥇</span> <strong>1st</strong>
+                        {% elif row.rank == 2 %}
+                            <span class="rank-medal" title="Silver Medal">🥈</span> <strong>2nd</strong>
+                        {% elif row.rank == 3 %}
+                            <span class="rank-medal" title="Bronze Medal">🥉</span> <strong>3rd</strong>
+                        {% else %}
+                            <strong style="padding-left: 1.2rem; color: var(--text-secondary);">#{{ row.rank }}</strong>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ row.name }}</strong></td>
+                    <td>
+                        <span class="badge badge-{{ row.department|lower }}">{{ row.department }}</span>
+                    </td>
+                    <td>{{ row.graded_count }} / {{ row.subject_count }}</td>
+                    <td>{{ row.total }} <span style="font-size: 0.75rem; color: var(--text-muted);">/ {{ row.graded_count * 100 }}</span></td>
+                    <td><strong>{{ row.average }}%</strong></td>
+                    <td><span class="grade-pill grade-{{ row.grade }}">{{ row.grade }}</span></td>
+                    <td style="text-align: right;">
+                        <a href="{{ url_for('report', student_id=row.student_id) }}" class="btn btn-secondary btn-sm" style="padding: 0.35rem 0.65rem;" id="btn-view-report-{{ row.student_id }}">View Report</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
+                        No graded student records found. Submit student grades to construct the leaderboard!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('leaderboard-search');
+        const rows = document.querySelectorAll('.leaderboard-row');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.toLowerCase().trim();
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name');
+                    const dept = row.getAttribute('data-dept');
+                    if (name.includes(query) || dept.includes(query)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

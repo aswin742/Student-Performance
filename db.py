@@ -1,7 +1,11 @@
 import sqlite3
 import os
 
-DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.db')
+if os.environ.get('VERCEL') == '1' or os.environ.get('VERCEL_ENV'):
+    DATABASE_PATH = '/tmp/database.db'
+else:
+    DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.db')
+
 
 # Fixed list of departments and subjects
 DEPARTMENTS = {
@@ -65,22 +69,18 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Drop existing tables to recreate schema
-    cursor.execute("DROP TABLE IF EXISTS marks")
-    cursor.execute("DROP TABLE IF EXISTS students")
-    
-    # Create students table
+    # Create students table if not exists
     cursor.execute('''
-        CREATE TABLE students (
+        CREATE TABLE IF NOT EXISTS students (
             student_id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             department TEXT NOT NULL
         )
     ''')
     
-    # Create marks table (stores marks row-wise per subject)
+    # Create marks table if not exists
     cursor.execute('''
-        CREATE TABLE marks (
+        CREATE TABLE IF NOT EXISTS marks (
             mark_id INTEGER PRIMARY KEY AUTOINCREMENT,
             student_id INTEGER NOT NULL,
             subject_name TEXT NOT NULL,
@@ -89,6 +89,7 @@ def init_db():
             UNIQUE(student_id, subject_name)
         )
     ''')
+
     
     conn.commit()
     conn.close()
